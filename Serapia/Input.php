@@ -19,17 +19,17 @@ class Input
 	const DATE_TIME       = 'dateTime';
 
 	protected static $_DEFAULTS = array(
-		static::STRING    => '',
-		static::NUM       => 0,
-		static::UNUM      => 0,
-		static::INT       => 0,
-		static::UINT      => 0,
-		static::FLOAT     => 0.0,
-		static::BOOLEAN   => false,
-		static::BINARY    => '',
-		static::ARRAY_SIMPLE => array(),
-		static::JSON_ARRAY => array(),
-		static::DATE_TIME => 0
+		self::STRING    => '',
+		self::NUM       => 0,
+		self::UNUM      => 0,
+		self::INT       => 0,
+		self::UINT      => 0,
+		self::FLOAT     => 0.0,
+		self::BOOLEAN   => false,
+		self::BINARY    => '',
+		self::ARRAY_SIMPLE => array(),
+		self::JSON_ARRAY => array(),
+		self::DATE_TIME => 0
 	);
 
 	protected static $_strClean = array(
@@ -97,9 +97,9 @@ class Input
 		{
 			$defaultData = $options['default'];
 		}
-		else if (array_key_exists($firstFilter, static::$_DEFAULTS))
+		else if (array_key_exists($firstFilter, self::$_DEFAULTS))
 		{
-			$defaultData = static::$_DEFAULTS[$firstFilter];
+			$defaultData = self::$_DEFAULTS[$firstFilter];
 		}
 		else
 		{
@@ -128,7 +128,7 @@ class Input
 				{
 					foreach (array_keys($data) AS $key)
 					{
-						$data[$key] = static::_doClean($filterName, $options, $data[$key], $defaultData);
+						$data[$key] = self::_doClean($filterName, $options, $data[$key], $defaultData);
 					}
 				}
 				else
@@ -139,7 +139,7 @@ class Input
 			}
 			else
 			{
-				$data = static::_doClean($filterName, $options, $data, $defaultData);
+				$data = self::_doClean($filterName, $options, $data, $defaultData);
 			}
 		}
 
@@ -151,14 +151,14 @@ class Input
 	{
 		switch ($filterName)
 		{
-			case static::STRING:
+			case self::STRING:
 				$data = is_scalar($data) ? strval($data) : $defaultData;
 				if (strlen($data) && !preg_match('/./u', $data))
 				{
 					$data = $defaultData;
 				}
 
-				$data = static::cleanString($data);
+				$data = self::cleanString($data);
 
 				if (empty($filterOptions['noTrim']))
 				{
@@ -166,28 +166,28 @@ class Input
 				}
 			break;
 
-			case static::NUM:
+			case self::NUM:
 				$data = strval($data) + 0;
 			break;
 
-			case static::UNUM:
+			case self::UNUM:
 				$data = strval($data) + 0;
 				$data = ($data < 0) ? $defaultData : $data;
 			break;
 
-			case static::INT:
+			case self::INT:
 				$data = intval($data);
 			break;
 
-			case static::UINT:
+			case self::UINT:
 				$data = ($data = intval($data)) < 0 ? $defaultData : $data;
 			break;
 
-			case static::FLOAT:
+			case self::FLOAT:
 				$data = floatval($data);
 			break;
 
-			case static::BOOLEAN:
+			case self::BOOLEAN:
 				if ($data === 'n' || $data == 'no' || $data === 'N')
 				{
 					$data = false;
@@ -198,19 +198,19 @@ class Input
 				}
 				break;
 
-			case static::BINARY:
+			case self::BINARY:
 				$data = strval($data);
 			break;
 
-			case static::ARRAY_SIMPLE:
+			case self::ARRAY_SIMPLE:
 				if (!is_array($data))
 				{
 					$data = $defaultData;
 				}
-				$data = static::cleanStringArray($data);
+				$data = self::cleanStringArray($data);
 			break;
 
-			case static::JSON_ARRAY:
+			case self::JSON_ARRAY:
 				if (is_string($data))
 				{
 					$data = json_decode($data, true);
@@ -219,10 +219,10 @@ class Input
 				{
 					$data = $defaultData;
 				}
-				$data = static::cleanStringArray($data);
+				$data = self::cleanStringArray($data);
 			break;
 
-			case static::DATE_TIME:
+			case self::DATE_TIME:
 				if (!$data)
 				{
 					$data = 0;
@@ -282,7 +282,7 @@ class Input
 	{
 		// only cover the BMP as MySQL only supports that
 		$string = preg_replace('/[\xF0-\xF7].../', '', $string);
-		return strtr(strval($string), static::$_strClean);
+		return strtr(strval($string), self::$_strClean);
 	}
 
 	/**
@@ -298,11 +298,11 @@ class Input
 		{
 			if (is_string($v))
 			{
-				$v = static::cleanString($v);
+				$v = self::cleanString($v);
 			}
 			else if (is_array($v))
 			{
-				$v = static::cleanStringArray($v);
+				$v = self::cleanStringArray($v);
 			}
 		}
 
@@ -338,7 +338,7 @@ class Input
 	 */
 	public static function rawFilter($data, $filterName, array $options = array())
 	{
-		return static::_doClean($filterName, $options, $data, static::$_DEFAULTS[$filterName]);
+		return self::_doClean($filterName, $options, $data, self::$_DEFAULTS[$filterName]);
 	}
 
 	/**
