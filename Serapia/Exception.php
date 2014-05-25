@@ -2,7 +2,7 @@
 
 namespace Serapia;
 
-class Exception extends \Slim\Exception
+class Exception extends \Exception
 {
 	protected $_userPrintable = false;
 	protected $_messages = null;

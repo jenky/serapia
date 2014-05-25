@@ -31,6 +31,8 @@ class Application
 
 	public static $secure = false;
 
+	protected static $_randomData = '';
+
 	public function beginApplication($configDir = '.', $rootDir = '.', $loadDefaultData = true)
 	{
 		if ($this->_initialized)
@@ -112,9 +114,21 @@ class Application
 	{
 		$app = static::getApp();
 		$config = $this->loadConfig();
+
+		$cookieConfigs = array();
+
+		foreach ($config['cookie'] as $key => $value) 
+		{
+			$cookieConfigs['cookies.' . $key] = $value;
+		}
+
+		unset($config['cookie']);
+		$config += $cookieConfigs;
+
 		$app->config($config);
 
-		$this->loadDb($config['db']);
+		$app->requestPaths = static::getRequestPaths($app->request);
+		$app->db = $this->loadDb($config['db']);
 
 		static::loadCustomData();
 	}
@@ -173,9 +187,16 @@ class Application
 			'debug' => false,
 			'globalKey' => '094u32109ufd0s849sdjk4ji4398',
 			'cookie' => array(
-				'prefix' => 'api_',
+				'prefix' => 'app_',
 				'path' => '/',
-				'domain' => ''
+				'domain' => null,
+				'encrypt' => false,
+				'lifetime' => '30 minutes',
+				'secure' => false,
+				'httponly' => false,
+				'secret_key' => 'CHANGE_ME',
+				'cipher' => 'rijndael-256',
+				'cipher_mode' => 'cbc'		
 			)
 		);
 	}
@@ -255,9 +276,43 @@ class Application
 		}
 	}
 
+	public static function get($key)
+	{
+		return static::getApp()->$key;
+	}
+
+	public static function set($key, $value)
+	{
+		return static::getApp()->$key = $value;
+	}
+
 	public static function getConfig($key)
 	{
 		return static::getApp()->config($key);
+	}
+
+	public static function getRequestPaths(\Slim\Http\Request $request)
+	{
+		$basePath = $request->getRootUri();
+		if ($basePath === '' || substr($basePath, -1) != '/')
+		{
+			$basePath .= '/';
+		}
+
+		$host = $request->getHost();
+
+		$protocol = $request->getScheme();
+
+		$requestUri = $request->getRootUri() . $request->getResourceUri();
+
+		return array(
+			'basePath' => $basePath,
+			'host' => $host,
+			'protocol' => $protocol,
+			'fullBasePath' => $protocol . '://' . $host . $basePath,
+			'requestUri' => $requestUri,
+			'fullUri' => $protocol . '://' . $host . $requestUri
+		);
 	}
 
 	public static function merge(array $first, array $second)
@@ -390,11 +445,88 @@ class Application
 		return $array;
 	}
 
+	public static function generateRandomString($length, $raw = false)
+	{
+		$mixInternal = false;
+
+		while (strlen(static::$_randomData) < $length)
+		{
+			if (function_exists('openssl_random_pseudo_bytes')
+				&& (substr(PHP_OS, 0, 3) != 'WIN' || version_compare(phpversion(), '5.3.4', '>='))
+			)
+			{
+				static::$_randomData .= openssl_random_pseudo_bytes($length);
+				$mixInternal = true;
+			}
+			else if (function_exists('mcrypt_create_iv') && version_compare(phpversion(), '5.3.0', '>='))
+			{
+				static::$_randomData .= mcrypt_create_iv($length, MCRYPT_DEV_URANDOM);
+				$mixInternal = true;
+			}
+			else if (substr(PHP_OS, 0, 3) != 'WIN'
+				&& @file_exists('/dev/urandom') && @is_readable('/dev/urandom')
+				&& $fp = @fopen('/dev/urandom', 'r')
+			)
+			{
+				if (function_exists('stream_set_read_buffer'))
+				{
+					stream_set_read_buffer($fp, 0);
+				}
+
+				static::$_randomData .= fread($fp, $length);
+				fclose($fp);
+				$mixInternal = true;
+			}
+			else
+			{
+				static::$_randomData .= static::generateInternalRandomValue();
+			}
+		}
+
+		$return = substr(static::$_randomData, 0, $length);
+		static::$_randomData = substr(static::$_randomData, $length);
+
+		// have seen situations where duplicates may be read(!?!) so mix
+		// in another source
+		if ($mixInternal)
+		{
+			$final = '';
+			foreach (str_split($return, 16) AS $i => $part)
+			{
+				$internal = uniqid(mt_rand());
+				if ($i % 2 == 0)
+				{
+					$final .= md5($part . $internal, true);
+				}
+				else
+				{
+					$final .= md5($internal . $part, true);
+				}
+			}
+
+			$return = substr($final, 0, $length);
+		}
+
+		if ($raw)
+		{
+			return $return;
+		}
+
+		// modified base64 to be more URL safe (roughly in rfc4648)
+		return substr(strtr(base64_encode($return), array(
+			'=' => '',
+			"\r" => '',
+			"\n" => '',
+			'+' => '-',
+			'/' => '_'
+		)), 0, $length);
+	}
+
 	public static final function getInstance()
 	{
 		if (!static::$_instance)
 		{
-			static::$_instance = new self();
+			static::$_instance = new static();
 		}
 
 		return static::$_instance;

@@ -178,7 +178,7 @@ class Route
 
 		if (!static::$_instance)
 		{
-			static::$_instance = new self();
+			static::$_instance = new static();
 		}
 
 		return static::$_instance;
