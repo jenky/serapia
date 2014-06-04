@@ -30,17 +30,17 @@ class Route
 
 		$this->app->notFound(array($this, 'notFound'));
 
-		//$this->app->hook('slim.before.router', array($this, 'beforeRouter'));
+		/*$this->app->hook('slim.before.router', array($this, 'beforeRouter'));
 		$this->app->hook('slim.before.dispatch', array($this, 'beforeDispatch'));
-		$this->app->hook('slim.after.dispatch', array($this, 'afterDispatch'));
+		$this->app->hook('slim.after.dispatch', array($this, 'afterDispatch'));*/
 	}
 
-	final public function notFound()
+	public function notFound()
 	{
 		$this->responseError('Not found', 404);
 	}
 
-	final public function beforeRouter()
+	/*final public function beforeRouter()
 	{
 	}
 
@@ -62,13 +62,8 @@ class Route
 
 	protected function _afterDispatch()
 	{
-	}
+	}*/
 
-	/**
-	 * Get all route files from directory
-	 * 
-	 * @param string $dir
-	 */ 
 	protected function _getRoutesFromDirectory($dir)
 	{
 		$root = Bootstrap::getInstance()->getRootDir();
