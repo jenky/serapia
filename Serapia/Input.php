@@ -263,7 +263,7 @@ class Input
 				}
 			break;
 
-			default:
+			//default:
 				
 		}
 

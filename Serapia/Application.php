@@ -127,6 +127,7 @@ class Application
 
 		$app->config($config);
 
+		$app->baseUrl = $app->request->getUrl() . $app->request->getRootUri();
 		$app->requestPaths = static::getRequestPaths($app->request);
 		$app->db = $this->loadDb($config['db']);
 
@@ -185,7 +186,6 @@ class Application
 			    'prefix'    => ''
 			),
 			'debug' => false,
-			'globalKey' => '094u32109ufd0s849sdjk4ji4398',
 			'cookie' => array(
 				'prefix' => 'app_',
 				'path' => '/',
