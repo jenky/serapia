@@ -18,41 +18,22 @@ abstract class Parser
 	public function __construct(\Slim\Http\Response $response, \Slim\Http\Request $request)
 	{
 		$this->app = Application::getApp();
-		$this->_view = $this->app->view;
-
 		$this->_render();
 	}
 	
 	protected function _render()
 	{
-		$baseViewClass = '\Serapia\View\Base';
+		$this->_params = $this->app->view->all();
 
-        $class = Application::resolveDynamicClass($this->_view->renderer);
-        if (!$class)
-        {
-            $class = $baseViewClass;
-        }
-
-        $viewClass = new $class();
-        if (!$viewClass instanceof $baseViewClass)
-        {
-            throw new Exception('View must be a child of ' . $baseViewClass);
-        }
-
-        $parser = $this->_view->getParser();
-
-        $viewClass->prepareParams();
-
-        if (class_exists($this->_view->renderer) && is_callable(array($this->_view->renderer, $parser)))
+		unset($this->_params['flash']);
+		if ($this->app->request->params('_debug'))
 		{
-			try
-			{
-				call_user_func(array($viewClass, $parser));
-			}
-			catch (Exception $e) {}
+			$this->_params['debug'] = array( 
+				'status' => $this->app->response->getStatus(),
+				//'page_time' => abs(Application::$time - Application::get('page_start_time')),
+				'memory_usage' => memory_get_usage(),
+			);
 		}
-
-		$this->_params = $viewClass->getParams();
 
 		$this->app->response['Content-Type'] = $this->contentType;
 	}

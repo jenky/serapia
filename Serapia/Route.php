@@ -29,40 +29,12 @@ class Route
 		$this->_input = new Input($this->app->request);
 
 		$this->app->notFound(array($this, 'notFound'));
-
-		/*$this->app->hook('slim.before.router', array($this, 'beforeRouter'));
-		$this->app->hook('slim.before.dispatch', array($this, 'beforeDispatch'));
-		$this->app->hook('slim.after.dispatch', array($this, 'afterDispatch'));*/
 	}
 
 	public function notFound()
 	{
 		$this->responseError('Not found', 404);
 	}
-
-	/*final public function beforeRouter()
-	{
-	}
-
-	final public function beforeDispatch()
-	{
-		$route = $this->app->router()->getCurrentRoute();
-		$this->_beforeDispatch($route);
-	}
-
-	final public function afterDispatch()
-	{
-		$route = $this->app->router()->getCurrentRoute();
-		$this->_afterDispatch($route);
-	}
-
-	protected function _beforeDispatch() 
-	{
-	}
-
-	protected function _afterDispatch()
-	{
-	}*/
 
 	protected function _getRoutesFromDirectory($dir)
 	{
@@ -104,14 +76,25 @@ class Route
 		return Template::getInstance($templateClass);
 	}
 
+	public function getFormat($format = null)
+	{
+		$f = strtolower($this->_input->filterSingle('format', Input::STRING, array('default' => 'json')));
+
+		if ($format == null)
+		{
+			return $f;
+		}
+
+		return (strtolower($format) == $f);
+	}
+
 	public function responseRedirect($redirectTarget, $redirectStatus = 303, $redirectMessage = null, array $redirectParams = array())
 	{
 		$this->app->redirect($redirectTarget, $redirectStatus);
 	}
 
-	public function responseView($viewName = '', array $params, $status = 200)
+	public function responseView(array $params, $status = 200)
 	{
-		$this->app->renderer = $viewName;
 		return $this->app->render($status, $params);
 	}
 
